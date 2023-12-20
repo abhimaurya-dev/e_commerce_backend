@@ -21,7 +21,7 @@ app.use(morgan('dev'))
 app.use("/api/v1/auth", authRoutes);
 
 app.get("/",(req,res) => {
-    res.send({
+    res.json({
         message: "Welcome to ecommerce backend"
     })
 })

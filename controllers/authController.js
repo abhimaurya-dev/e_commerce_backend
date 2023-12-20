@@ -1,6 +1,8 @@
 import userModel from "../models/userModel.js";
-import {hashPassword} from  "../helpers/authHelper.js"
+import {comparePassword, hashPassword} from  "../helpers/authHelper.js"
+import jwt from "jsonwebtoken"
 
+// REGISTER || POST
 export const registerController = async(req,res) => {
     try {
         const {name, email, password, address, phone} = req.body;
@@ -37,6 +39,57 @@ export const registerController = async(req,res) => {
             success: true,
             message: "Registered successfully",
             user
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).send({
+            success: false,
+            message: "Internal Server Error",
+            error
+        })
+    }
+}
+
+
+// LOGIN || POST
+export const loginController = async(req,res) => {
+    try {
+        const {email, password} = req.body;
+        // validation
+        if(!email || !password){
+            return res.send({
+                success: false,
+                message: "Invalid email or password"
+            })
+        } 
+        // check user
+        const user =  await userModel.findOne({email});
+        if(!user){
+            return res.status(404).send({
+                success: false,
+                message: "Invalid email or password"
+            })
+        }
+        const passwordVerified = await comparePassword(password, user.password)
+        if(!passwordVerified){
+            return res.status(200).send({
+                success: false,
+                message: "Invalid email or password"
+            })
+        }
+        // jwt token
+        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {expiresIn: "7d"});
+        res.status(200).send({
+            success: true,
+            message: "login successful",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                address: user.address
+            },
+            token
         })
     } catch (error) {
         console.log(error)
